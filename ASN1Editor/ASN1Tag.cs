@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using CVMDLL.Text;
+using System.IO;
 
 namespace ASN1Editor
 {
@@ -74,7 +75,7 @@ namespace ASN1Editor
                 (Length == ASN1.IndefiniteLength) ? "inf" : Length.ToString(),
                 Constructed ? "cons" : "prim",
                 GetFullId(),
-                string.Concat(string.Empty.PadLeft(indentLevel*2, ' '), ShortDescription),
+                string.Concat(string.Empty.PadLeft(indentLevel * 2, ' '), ShortDescription),
                 DataText
             );
 
@@ -97,6 +98,110 @@ namespace ASN1Editor
             {
                 return Identifier.ToString();
             }
+        }
+
+        public void Write(Stream stream)
+        {
+            #region Tag
+            byte tagByte = (byte)((((int)Class) << 6) | ((Constructed ? 1 : 0) << 5));
+            if (Identifier < 31)
+            {
+                tagByte = (byte)(tagByte | Identifier);
+                stream.WriteByte(tagByte);
+            }
+            else
+            {
+                tagByte |= 31;
+                stream.WriteByte(tagByte);
+                int n = 0;
+                while ((Identifier >> (n * 7)) > 0)
+                {
+                    n++;
+                }
+
+                while (n > 0)
+                {
+                    n--;
+                    tagByte = (byte)((Identifier >> (n * 7)) & (0x7F));
+                    if (n >= 1) tagByte |= 0x80;
+                    stream.WriteByte(tagByte);
+                }
+            }
+            #endregion
+
+            #region Length
+            byte lenByte;
+            if (Length >= 0 && Length <= 127)
+            {
+                lenByte = (byte)Length;
+                stream.WriteByte(lenByte);
+            }
+            else if (Length == ASN1.IndefiniteLength)
+            {
+                //throw new NotImplementedException();
+                lenByte = 0x80;
+                stream.WriteByte(lenByte);
+            }
+            else if (Length > 0)
+            {
+                int numBytes = (int)Math.Ceiling(Math.Log(Length + 1) / Math.Log(256));
+                if (numBytes >= 0x7F) throw new IOException("Don't know how to write length with 127 bytes");
+                lenByte = (byte)(0x80 | (numBytes & 0x7F));
+                stream.WriteByte(lenByte);
+
+                for (int i = 0; i < numBytes; ++i)
+                {
+                    lenByte = (byte)((Length >> (8 * (numBytes - i - 1))) & 0xFF);
+                    stream.WriteByte(lenByte);
+                }
+            }
+            else
+            {
+                throw new IOException("Don't know how to write negative length.");
+            }
+            #endregion
+
+            #region Data
+            if (Constructed)
+            {
+                foreach (ASN1Tag subTag in SubTags)
+                {
+                    subTag.Write(stream);
+                }
+            }
+            else
+            {
+                stream.Write(Data, 0, Data.Length);
+            }
+            #endregion
+        }
+
+        public static void TestWrite()
+        {
+            MemoryStream ms;
+            ASN1Tag tag1 = new ASN1Tag();
+            tag1.Class = ASN1.Class.Universal;
+            tag1.Constructed = false;
+            tag1.Identifier = 6;
+            tag1.Length = 2;
+            ms = new MemoryStream();
+            tag1.Write(ms);
+
+            ASN1Tag tag2 = new ASN1Tag();
+            tag2.Class = ASN1.Class.ContextSpecific;
+            tag2.Constructed = true;
+            tag2.Identifier = 1024;
+            tag2.Length = 127;
+            ms = new MemoryStream();
+            tag2.Write(ms);
+
+            ASN1Tag tag3 = new ASN1Tag();
+            tag3.Class = ASN1.Class.Universal;
+            tag3.Constructed = false;
+            tag3.Identifier = 31;
+            tag3.Length = 10240;
+            ms = new MemoryStream();
+            tag3.Write(ms);
         }
 
         #region IEnumerable<ASN1Tag> Members

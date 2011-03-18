@@ -14,23 +14,11 @@ namespace ASN1Editor
         [STAThread]
         static void Main()
         {
-            OidDb oidDb = OidDb.FromFile("OID.txt");
-            //Console.WriteLine(oidDb.ToString());
-
-            ASN1TagDataReader.OidDb = oidDb;
-            ASN1Tag rootNode;
-
-            //using (FileStream fs = new FileStream(@"c:\cygwin\tmp\pkcs7_test\out.p7m", FileMode.Open, FileAccess.Read))
-            using (FileStream fs = new FileStream(@"c:\cygwin\tmp\BZKtesthulpmddl_V4.der", FileMode.Open, FileAccess.Read))
-            {
-                rootNode = ASN1.Decode(fs);
-                //Console.WriteLine(rootNode.ToShortText());
-            }
+            ASN1TagDataReader.OidDb = OidDb.FromFile("OID.txt");
 
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Form1 form = new Form1();
-            form.ShowAsn1(rootNode);
             Application.Run(form);
         }
     }

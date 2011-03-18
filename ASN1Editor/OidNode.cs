@@ -12,7 +12,7 @@ namespace ASN1Editor
         public string OidString { get; protected set; }
         public string Description { get; protected set; }
 
-        private Dictionary<int, OidNode> SubNodes { get; set; }
+        protected Dictionary<int, OidNode> SubNodes { get; set; }
 
         public OidNode()
         {
@@ -40,7 +40,7 @@ namespace ASN1Editor
             {
                 OidNode node = new OidNode();
                 node.Id = id;
-                node.OidString = GetOidString(oid, 0, oid.Length);
+                node.OidString = OidToString(oid, 0, oid.Length);
                 SubNodes.Add(id, node);
 
                 if (oidOffset == oid.Length - 1)
@@ -58,7 +58,39 @@ namespace ASN1Editor
             return SubNodes.ContainsKey(subId) ? SubNodes[subId] : null;
         }
 
-        private static string GetOidString(int[] oid, int start, int length)
+        public override string ToString()
+        {
+            StringBuilder str = new StringBuilder();
+            ToString(str, 0);
+            return str.ToString();
+        }
+
+        protected internal virtual void ToString(StringBuilder buf, int indent)
+        {
+            Indent(buf, indent);
+            buf.Append("OidNode [").AppendLine();
+            indent++;
+
+            Indent(buf, indent);
+            buf.Append("Id: ").Append(Id).AppendLine();
+
+            Indent(buf, indent);
+            buf.Append("OidString: ").Append(OidString).AppendLine();
+
+            Indent(buf, indent);
+            buf.Append("Description: ").Append(Description).AppendLine();
+
+            foreach (OidNode node in SubNodes.Values)
+            {
+                node.ToString(buf, indent);
+            }
+
+            indent--;
+            Indent(buf, indent);
+            buf.Append("]").AppendLine();
+        }
+
+        private static string OidToString(int[] oid, int start, int length)
         {
             StringBuilder str = new StringBuilder();
 
@@ -84,39 +116,7 @@ namespace ASN1Editor
             return parts;
         }
 
-        public override string ToString()
-        {
-            StringBuilder str = new StringBuilder();
-            ToString(str, 0);
-            return str.ToString();
-        }
-
-        private void ToString(StringBuilder buf, int indent)
-        {
-            Indent(buf, indent);
-            buf.Append("OidNode [").AppendLine();
-            indent++;
-
-            Indent(buf, indent);
-            buf.Append("Id: ").Append(Id).AppendLine();
-
-            Indent(buf, indent);
-            buf.Append("OidString: ").Append(OidString).AppendLine();
-
-            Indent(buf, indent);
-            buf.Append("Description: ").Append(Description).AppendLine();
-
-            foreach (OidNode node in SubNodes.Values)
-            {
-                node.ToString(buf, indent);
-            }
-
-            indent--;
-            Indent(buf, indent);
-            buf.Append("]").AppendLine();
-        }
-
-        private static void Indent(StringBuilder buf, int indent)
+        protected static void Indent(StringBuilder buf, int indent)
         {
             while (indent-- > 0) buf.Append("  ");
         }

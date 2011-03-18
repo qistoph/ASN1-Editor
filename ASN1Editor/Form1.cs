@@ -6,6 +6,7 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
+using System.IO;
 
 namespace ASN1Editor
 {
@@ -14,12 +15,6 @@ namespace ASN1Editor
         public Form1()
         {
             InitializeComponent();
-
-            int n = 0;
-            foreach (Image img in imageListDataType.Images)
-            {
-                img.Save("image_" + (n++) + ".bmp");
-            }
         }
 
         private int[] Asn1ImageIndexes = new int[] {
@@ -87,10 +82,67 @@ namespace ASN1Editor
             {
                 nodeTree.Text += string.Concat(": ", nodeAsn1.DataText);
             }
-            nodeTree.ImageIndex = Asn1ImageIndexes[nodeAsn1.Identifier];
+            if (nodeAsn1.Class == ASN1.Class.Universal && nodeAsn1.Identifier <= 31)
+            {
+                nodeTree.ImageIndex = Asn1ImageIndexes[nodeAsn1.Identifier];
+            }
+            else
+            {
+                nodeTree.ImageIndex = 32;
+            }
             nodeTree.SelectedImageIndex = nodeTree.ImageIndex;
 
             return nodeTree;
+        }
+
+        private void openToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (DialogResult.OK == openFileDialog.ShowDialog())
+            {
+                OpenFile(openFileDialog.FileName);
+            }
+        }
+
+        ASN1Tag rootNode;
+        private void OpenFile(string file)
+        {
+            SuspendLayout();
+
+            try
+            {
+                using (FileStream fs = new FileStream(file, FileMode.Open, FileAccess.Read))
+                {
+                    try
+                    {
+                        byte[] pemData = PemReader.ReadPem(fs);
+
+                        using (MemoryStream ms = new MemoryStream(pemData))
+                        {
+                            rootNode = ASN1.Decode(ms);
+                        }
+                    }
+                    catch (ArgumentException)
+                    {
+                        fs.Position = 0;
+                        rootNode = ASN1.Decode(fs);
+                    }
+                }
+                ShowAsn1(rootNode);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, "Error while opening file: " + ex.Message, "Error opening file", MessageBoxButtons.OK, MessageBoxIcon.Error, MessageBoxDefaultButton.Button1);
+            }
+
+            ResumeLayout();
+        }
+
+        private void writeToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using (FileStream fs = new FileStream("temp.out", FileMode.Create, FileAccess.Write))
+            {
+                rootNode.Write(fs);
+            }
         }
     }
 }

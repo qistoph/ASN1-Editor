@@ -30,11 +30,28 @@ namespace ASN1Editor
             }
         }
 
+        protected internal override void ToString(StringBuilder buf, int indent)
+        {
+            Indent(buf, indent);
+            buf.Append("OidDb [").AppendLine();
+            indent++;
+
+            foreach (OidNode node in SubNodes.Values)
+            {
+                node.ToString(buf, indent);
+            }
+
+            indent--;
+            Indent(buf, indent);
+            buf.Append("]").AppendLine();
+        }
+
         public static OidDb FromFile(string file)
         {
             OidDb oidDb = new OidDb();
             oidDb.ParseFile(file);
             return oidDb;
         }
+
     }
 }
