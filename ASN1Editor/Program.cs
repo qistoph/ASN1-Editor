@@ -14,11 +14,13 @@ namespace ASN1Editor
         [STAThread]
         static void Main()
         {
-            ASN1TagDataReader.OidDb = OidDb.FromFile("OID.txt");
-
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
+
+            ASN1TagDataReader.OidDb = OidDb.FromFile("OID.txt");
+
             Form1 form = new Form1();
+            Application.Run(form);
             Application.Run(form);
         }
     }

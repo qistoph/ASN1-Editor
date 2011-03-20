@@ -176,34 +176,6 @@ namespace ASN1Editor
             #endregion
         }
 
-        public static void TestWrite()
-        {
-            MemoryStream ms;
-            ASN1Tag tag1 = new ASN1Tag();
-            tag1.Class = ASN1.Class.Universal;
-            tag1.Constructed = false;
-            tag1.Identifier = 6;
-            tag1.Length = 2;
-            ms = new MemoryStream();
-            tag1.Write(ms);
-
-            ASN1Tag tag2 = new ASN1Tag();
-            tag2.Class = ASN1.Class.ContextSpecific;
-            tag2.Constructed = true;
-            tag2.Identifier = 1024;
-            tag2.Length = 127;
-            ms = new MemoryStream();
-            tag2.Write(ms);
-
-            ASN1Tag tag3 = new ASN1Tag();
-            tag3.Class = ASN1.Class.Universal;
-            tag3.Constructed = false;
-            tag3.Identifier = 31;
-            tag3.Length = 10240;
-            ms = new MemoryStream();
-            tag3.Write(ms);
-        }
-
         #region IEnumerable<ASN1Tag> Members
 
         public IEnumerator<ASN1Tag> GetEnumerator()

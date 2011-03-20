@@ -77,7 +77,7 @@ namespace ASN1Editor
         private TreeNode CreateTreeNode(ASN1Tag nodeAsn1)
         {
             TreeNode nodeTree = new TreeNode();
-            nodeTree.Text = string.Concat("(", nodeAsn1.StartByte, ", ", nodeAsn1.Length, ") ", nodeAsn1.ShortDescription);
+            nodeTree.Text = string.Concat("(", nodeAsn1.StartByte, ", ", (nodeAsn1.Length == ASN1.IndefiniteLength ? "inf" : nodeAsn1.Length.ToString()), ") ", nodeAsn1.ShortDescription);
             if (!nodeAsn1.Constructed)
             {
                 nodeTree.Text += string.Concat(": ", nodeAsn1.DataText);
