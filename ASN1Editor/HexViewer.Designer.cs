@@ -47,7 +47,11 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(555, 273);
             this.Controls.Add(this.txtHex);
+            this.MaximizeBox = false;
+            this.MinimizeBox = false;
             this.Name = "HexViewer";
+            this.ShowInTaskbar = false;
+            this.StartPosition = System.Windows.Forms.FormStartPosition.Manual;
             this.Text = "HexViewer";
             this.ResumeLayout(false);
 

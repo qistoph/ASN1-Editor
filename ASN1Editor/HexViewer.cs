@@ -25,7 +25,7 @@ namespace ASN1Editor
         {
             txtHex.Clear();
 
-            StringBuilder asciiString = null;
+            StringBuilder asciiString = new StringBuilder();
             int i;
             for (i = 0; i < data.Length; ++i)
             {
@@ -36,7 +36,6 @@ namespace ASN1Editor
 
                     txtHex.AppendText(i.ToString("X8"));
                     txtHex.AppendText(" ");
-                    asciiString = new StringBuilder();
                 }
 
                 if (i >= highlightStart && i < (highlightStart + highlightLength))
@@ -66,6 +65,7 @@ namespace ASN1Editor
                     txtHex.AppendText("  ");
                     txtHex.AppendText(asciiString.ToString());
                     txtHex.AppendText(Environment.NewLine);
+                    asciiString = new StringBuilder();
                 }
             }
 
@@ -85,6 +85,8 @@ namespace ASN1Editor
                     txtHex.AppendText(Environment.NewLine);
                 }
             }
+
+            txtHex.SelectionStart = 0;
         }
     }
 }
