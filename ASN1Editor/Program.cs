@@ -21,7 +21,6 @@ namespace ASN1Editor
 
             Form1 form = new Form1();
             Application.Run(form);
-            Application.Run(form);
         }
     }
 }
