@@ -13,7 +13,8 @@ namespace ASN1Editor
         public bool Constructed { get; protected internal set; }
         public int Identifier { get; protected internal set; }
         public long StartByte { get; protected internal set; }
-        public long Length { get; protected internal set; }
+        public long DataLength { get; protected internal set; }
+        public long HeaderLength { get; protected internal set; }
         protected internal byte[] Data { get; set; }
 
         private List<ASN1Tag> SubTags { get; set; }
@@ -31,7 +32,7 @@ namespace ASN1Editor
         {
             get
             {
-                if (Class == ASN1.Class.Universal && Constructed == false && Identifier == 0 && Length == 0)
+                if (Class == ASN1.Class.Universal && Constructed == false && Identifier == 0 && DataLength == 0)
                     return "EOC";
                 else if (Class == ASN1.Class.Universal && Identifier < 31)
                     return ASN1.GetUTNDescription(Identifier);
@@ -72,7 +73,7 @@ namespace ASN1Editor
         {
             output.AddRow(
                 StartByte.ToString(),
-                (Length == ASN1.IndefiniteLength) ? "inf" : Length.ToString(),
+                (DataLength == ASN1.IndefiniteLength) ? "inf" : DataLength.ToString(),
                 Constructed ? "cons" : "prim",
                 GetFullId(),
                 string.Concat(string.Empty.PadLeft(indentLevel * 2, ' '), ShortDescription),

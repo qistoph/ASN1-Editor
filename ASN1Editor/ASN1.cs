@@ -98,17 +98,18 @@ namespace ASN1Editor
             node.Identifier = ReadIdentifier(stream, out nodeClass, out constructed);
             node.Class = nodeClass;
             node.Constructed = constructed;
-            node.Length = ReadLength(stream);
+            node.DataLength = ReadLength(stream);
+            node.HeaderLength = stream.Position - node.StartByte;
 
             if (node.Constructed)
             {
                 if (!singleNode)
                 {
-                    while ((stream.Position < node.StartByte + node.Length) || (node.Length == IndefiniteLength))
+                    while ((stream.Position < node.StartByte + node.DataLength) || (node.DataLength == IndefiniteLength))
                     {
                         ASN1Tag subTag = Decode(stream, singleNode, readSubAsn1);
                         node.AddSubTag(subTag);
-                        if (subTag.Identifier == EocIdentifier && subTag.Length == EocLength)
+                        if (subTag.Identifier == EocIdentifier && subTag.DataLength == EocLength)
                         {
                             break;
                         }
@@ -245,12 +246,12 @@ namespace ASN1Editor
 
         private static void ReadData(ASN1Tag node, Stream stream)
         {
-            if (node.Length > int.MaxValue)
+            if (node.DataLength > int.MaxValue)
             {
                 throw new IOException("Can't read primitive data with more than " + int.MaxValue + " bytes.");
             }
 
-            node.Data = new byte[(int)node.Length];
+            node.Data = new byte[(int)node.DataLength];
             int read = stream.Read(node.Data, 0, node.Data.Length);
             if (read != node.Data.Length)
             {
@@ -311,27 +312,27 @@ namespace ASN1Editor
 
             #region Length
             byte lenByte;
-            if (node.Length >= 0 && node.Length <= 127)
+            if (node.DataLength >= 0 && node.DataLength <= 127)
             {
-                lenByte = (byte)node.Length;
+                lenByte = (byte)node.DataLength;
                 stream.WriteByte(lenByte);
             }
-            else if (node.Length == ASN1.IndefiniteLength)
+            else if (node.DataLength == ASN1.IndefiniteLength)
             {
                 //throw new NotImplementedException();
                 lenByte = 0x80;
                 stream.WriteByte(lenByte);
             }
-            else if (node.Length > 0)
+            else if (node.DataLength > 0)
             {
-                int numBytes = (int)Math.Ceiling(Math.Log(node.Length + 1) / Math.Log(256));
+                int numBytes = (int)Math.Ceiling(Math.Log(node.DataLength + 1) / Math.Log(256));
                 if (numBytes >= 0x7F) throw new IOException("Don't know how to write length with 127 bytes");
                 lenByte = (byte)(0x80 | (numBytes & 0x7F));
                 stream.WriteByte(lenByte);
 
                 for (int i = 0; i < numBytes; ++i)
                 {
-                    lenByte = (byte)((node.Length >> (8 * (numBytes - i - 1))) & 0xFF);
+                    lenByte = (byte)((node.DataLength >> (8 * (numBytes - i - 1))) & 0xFF);
                     stream.WriteByte(lenByte);
                 }
             }

@@ -15,7 +15,7 @@ namespace ASN1Editor
         {
             this.Asn1Node = asn1Node;
 
-            this.Text = string.Concat("(", asn1Node.StartByte, ", ", (asn1Node.Length == ASN1.IndefiniteLength ? "inf" : asn1Node.Length.ToString()), ") ", asn1Node.ShortDescription);
+            this.Text = string.Concat("(", asn1Node.StartByte, ", ", (asn1Node.DataLength == ASN1.IndefiniteLength ? "inf" : asn1Node.DataLength.ToString()), ") ", asn1Node.ShortDescription);
             if (!asn1Node.Constructed)
             {
                 this.Text += string.Concat(": ", asn1Node.DataText);

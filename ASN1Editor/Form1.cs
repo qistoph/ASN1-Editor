@@ -115,8 +115,8 @@ namespace ASN1Editor
             {
                 // TODO: length is incorrect since it's only about data length, not including the header
                 System.Diagnostics.Debug.Assert(selectedNode.Asn1Node.StartByte <= int.MaxValue);
-                System.Diagnostics.Debug.Assert(selectedNode.Asn1Node.Length <= int.MaxValue);
-                hexViewer.View(data, (int)selectedNode.Asn1Node.StartByte, (int)selectedNode.Asn1Node.Length);
+                System.Diagnostics.Debug.Assert(selectedNode.Asn1Node.DataLength <= int.MaxValue);
+                hexViewer.View(data, (int)selectedNode.Asn1Node.StartByte, (int)(selectedNode.Asn1Node.DataLength + selectedNode.Asn1Node.HeaderLength));
             }
 
             if (!hexViewer.Visible)
