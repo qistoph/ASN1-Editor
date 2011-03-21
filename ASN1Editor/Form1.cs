@@ -14,11 +14,14 @@ namespace ASN1Editor
     {
 
         private ASN1Tag rootNode;
-        private HexViewer hexViewer = new HexViewer();
+        private HexViewer hexViewer;
 
         public Form1()
         {
             InitializeComponent();
+
+            hexViewer = new HexViewer();
+            hexViewer.Attach(this);
         }
 
         public void ShowAsn1(ASN1Tag root)
@@ -121,11 +124,11 @@ namespace ASN1Editor
                 hexViewer.View(data, (int)selectedNode.Asn1Node.StartByte, (int)selectedNode.Asn1Node.Length);
             }
 
-            hexViewer.Left = this.Right;
-            hexViewer.Top = this.Top;
-
-            if(!hexViewer.Visible)
+            if (!hexViewer.Visible)
+            {
                 hexViewer.Show(this);
+                this.MaximizedBounds = new Rectangle(0, 0, Screen.PrimaryScreen.WorkingArea.Width - hexViewer.Width, Screen.PrimaryScreen.WorkingArea.Height);
+            }
         }
     }
 }

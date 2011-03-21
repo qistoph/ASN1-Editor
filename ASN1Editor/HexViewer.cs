@@ -88,5 +88,34 @@ namespace ASN1Editor
 
             txtHex.SelectionStart = 0;
         }
+
+        private Form AttachedForm = null;
+        // TODO: some abstracted Form with AnchorStyles would be nice
+        internal void Attach(Form1 form)
+        {
+            AttachedForm = form;
+            if (form != null)
+            {
+                form.Move += new EventHandler(attachedFormMove);
+                form.Resize += new EventHandler(attachedFormResize);
+                this.Left = AttachedForm.Right;
+                this.Top = AttachedForm.Top;
+                this.Height = AttachedForm.Height;
+            }
+        }
+
+        void attachedFormMove(object sender, EventArgs e)
+        {
+            this.Left = AttachedForm.Right;
+            this.Top = AttachedForm.Top;
+        }
+
+        void attachedFormResize(object sender, EventArgs e)
+        {
+            this.Left = AttachedForm.Right;
+            this.Top = AttachedForm.Top;
+            this.Height = AttachedForm.Height;
+        }
+
     }
 }
