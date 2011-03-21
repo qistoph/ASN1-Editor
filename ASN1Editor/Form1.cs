@@ -75,6 +75,9 @@ namespace ASN1Editor
                         fs.Position = 0;
                         rootNode = ASN1.Decode(fs);
                     }
+
+                    stsFile.Text = string.Concat("File: ", file);
+                    stsSize.Text = string.Concat("Size: ", fs.Length.ToString(), " bytes");
                 }
                 ShowAsn1(rootNode);
             }
