@@ -9,7 +9,7 @@ namespace ASN1Editor
 {
     public class OidDb : OidNode
     {
-        private static Regex LineRegex = new Regex(@"((\d+\.?)+), (.*)");
+        private static Regex LineRegex = new Regex(@"^\s*((\d+\.?)+), (.*)");
 
         public OidDb()
         {
