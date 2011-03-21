@@ -215,7 +215,7 @@ namespace ASN1Editor
                 if ((b ^ 0x80) == 0)
                 {
                     // indefinte length; terminated by EOC
-                   length = IndefiniteLength;
+                    length = IndefiniteLength;
                 }
                 else
                 {
@@ -256,6 +256,107 @@ namespace ASN1Editor
             {
                 throw new IOException("Unable to read enough data bytes.");
             }
+        }
+
+        public static void Encode(string filename, ASN1Tag node)
+        {
+            using (FileStream fs = new FileStream(filename, FileMode.Create, FileAccess.Write))
+            {
+                Encode(fs, node);
+            }
+        }
+
+        public static void EncodeData(string filename, ASN1Tag node)
+        {
+            using (FileStream fs = new FileStream(filename, FileMode.Create, FileAccess.Write))
+            {
+                Encode(fs, node);
+            }
+        }
+
+        public static void Encode(Stream stream, ASN1Tag node)
+        {
+            EncodeHeader(stream, node);
+            EncodeData(stream, node);
+        }
+
+        public static void EncodeHeader(Stream stream, ASN1Tag node)
+        {
+            #region Tag
+            byte tagByte = (byte)((((int)node.Class) << 6) | ((node.Constructed ? 1 : 0) << 5));
+            if (node.Identifier < 31)
+            {
+                tagByte = (byte)(tagByte | node.Identifier);
+                stream.WriteByte(tagByte);
+            }
+            else
+            {
+                tagByte |= 31;
+                stream.WriteByte(tagByte);
+                int n = 0;
+                while ((node.Identifier >> (n * 7)) > 0)
+                {
+                    n++;
+                }
+
+                while (n > 0)
+                {
+                    n--;
+                    tagByte = (byte)((node.Identifier >> (n * 7)) & (0x7F));
+                    if (n >= 1) tagByte |= 0x80;
+                    stream.WriteByte(tagByte);
+                }
+            }
+            #endregion
+
+            #region Length
+            byte lenByte;
+            if (node.Length >= 0 && node.Length <= 127)
+            {
+                lenByte = (byte)node.Length;
+                stream.WriteByte(lenByte);
+            }
+            else if (node.Length == ASN1.IndefiniteLength)
+            {
+                //throw new NotImplementedException();
+                lenByte = 0x80;
+                stream.WriteByte(lenByte);
+            }
+            else if (node.Length > 0)
+            {
+                int numBytes = (int)Math.Ceiling(Math.Log(node.Length + 1) / Math.Log(256));
+                if (numBytes >= 0x7F) throw new IOException("Don't know how to write length with 127 bytes");
+                lenByte = (byte)(0x80 | (numBytes & 0x7F));
+                stream.WriteByte(lenByte);
+
+                for (int i = 0; i < numBytes; ++i)
+                {
+                    lenByte = (byte)((node.Length >> (8 * (numBytes - i - 1))) & 0xFF);
+                    stream.WriteByte(lenByte);
+                }
+            }
+            else
+            {
+                throw new IOException("Don't know how to write negative length.");
+            }
+            #endregion
+        }
+
+        public static void EncodeData(Stream stream, ASN1Tag node)
+        {
+            #region Data
+            if (node.Constructed)
+            {
+                foreach (ASN1Tag subTag in node)
+                {
+                    Encode(stream, subTag);
+                }
+            }
+            else
+            {
+                stream.Write(node.Data, 0, node.Data.Length);
+            }
+            #endregion
         }
 
         internal static string GetUTNDescription(int identifier)

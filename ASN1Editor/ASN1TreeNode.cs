@@ -36,49 +36,32 @@ namespace ASN1Editor
         protected ContextMenu CreateContextMenu()
         {
             ContextMenu menu = new ContextMenu();
-
-            MenuItem mnuDumpNode = menu.MenuItems.Add("Dump node", DumpNode);
-
-            MenuItem mnuDumpData = menu.MenuItems.Add("Dump data", DumpDataBinary);
-
+            MenuItem mnuDumpNode = menu.MenuItems.Add("Save node as...", (s, e) => Dump(SaveType.Node));
+            MenuItem mnuDumpData = menu.MenuItems.Add("Save data as...", (s, e) => Dump(SaveType.Data));
             return menu;
         }
 
-        private enum DumpType
+        private enum SaveType
         {
             Node,
-            DataBinary,
+            Data,
         }
 
-        private void DumpNode(object sender, EventArgs e)
-        {
-            Dump(DumpType.Node);
-        }
-
-        private void DumpDataBinary(object sender, EventArgs e)
-        {
-            Dump(DumpType.DataBinary);
-        }
-
-        private void Dump(DumpType dumpType)
+        private void Dump(SaveType dumpType)
         {
             SaveFileDialog fileDialog = new SaveFileDialog();
             if (DialogResult.OK == fileDialog.ShowDialog())
             {
-                //TODO: mode IO stuff to other class
-                using(FileStream fs = new FileStream(fileDialog.FileName, FileMode.Create, FileAccess.Write)) {
-
                 switch (dumpType)
                 {
-                    case DumpType.Node:
-                        this.Asn1Node.Write(fs);
+                    case SaveType.Node:
+                        ASN1.Encode(fileDialog.FileName, this.Asn1Node);
                         break;
-                    case DumpType.DataBinary:
-                        this.Asn1Node.WriteData(fs);
+                    case SaveType.Data:
+                        ASN1.EncodeData(fileDialog.FileName, this.Asn1Node);
                         break;
                     default:
                         break;
-                }
                 }
             }
         }

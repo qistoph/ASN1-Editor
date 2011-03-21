@@ -86,14 +86,6 @@ namespace ASN1Editor
             ResumeLayout();
         }
 
-        private void writeToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            using (FileStream fs = new FileStream("temp.out", FileMode.Create, FileAccess.Write))
-            {
-                rootNode.Write(fs);
-            }
-        }
-
         private void hexToolStripMenuItem_Click(object sender, EventArgs e)
         {
             byte[] data;
@@ -102,7 +94,7 @@ namespace ASN1Editor
             {
                 using (MemoryStream ms = new MemoryStream())
                 {
-                    rootNode.Write(ms);
+                    ASN1.Encode(ms, rootNode);
                     data = ms.ToArray();
                 }
             }
