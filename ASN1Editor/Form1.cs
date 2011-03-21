@@ -21,7 +21,7 @@ namespace ASN1Editor
             InitializeComponent();
 
             hexViewer = new HexViewer();
-            hexViewer.Attach(this);
+            hexViewer.Attach(this, AnchorStyles.None);
         }
 
         public void ShowAsn1(ASN1Tag root)
@@ -113,7 +113,7 @@ namespace ASN1Editor
             }
             else
             {
-                // TODO: length is incorrect since it's only about data length, not including the header
+                // TODO: length is incorrect for indefinite length nodes
                 System.Diagnostics.Debug.Assert(selectedNode.Asn1Node.StartByte <= int.MaxValue);
                 System.Diagnostics.Debug.Assert(selectedNode.Asn1Node.DataLength <= int.MaxValue);
                 hexViewer.View(data, (int)selectedNode.Asn1Node.StartByte, (int)(selectedNode.Asn1Node.DataLength + selectedNode.Asn1Node.HeaderLength));

@@ -55,6 +55,9 @@
     <Compile Include="ASN1TagDataReader.cs" />
     <Compile Include="ASN1TreeNode.cs" />
     <Compile Include="CVMDLL\Text\ConsoleTable.cs" />
+    <Compile Include="CVMDLL\Windows\Forms\AttachedForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Extensions.cs" />
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
