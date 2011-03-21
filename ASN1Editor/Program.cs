@@ -12,7 +12,7 @@ namespace ASN1Editor
         /// The main entry point for the application.
         /// </summary>
         [STAThread]
-        static void Main()
+        static void Main(string[] args)
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
@@ -20,6 +20,10 @@ namespace ASN1Editor
             ASN1TagDataReader.OidDb = OidDb.FromFile("OID.txt");
 
             Form1 form = new Form1();
+            if (args.Length > 0)
+            {
+                form.OpenFile(args[0]);
+            }
             Application.Run(form);
         }
     }

@@ -53,7 +53,7 @@ namespace ASN1Editor
             }
         }
 
-        private void OpenFile(string file)
+        public void OpenFile(string file)
         {
             SuspendLayout();
 
@@ -107,16 +107,17 @@ namespace ASN1Editor
             }
 
             ASN1TreeNode selectedNode = treeView1.SelectedNode as ASN1TreeNode;
-            if (selectedNode == null)
+            if (!hexViewer.Visible)
             {
                 hexViewer.View(data);
             }
-            else
+
+            if (selectedNode != null)
             {
                 // TODO: length is incorrect for indefinite length nodes
                 System.Diagnostics.Debug.Assert(selectedNode.Asn1Node.StartByte <= int.MaxValue);
                 System.Diagnostics.Debug.Assert(selectedNode.Asn1Node.DataLength <= int.MaxValue);
-                hexViewer.View(data, (int)selectedNode.Asn1Node.StartByte, (int)(selectedNode.Asn1Node.DataLength + selectedNode.Asn1Node.HeaderLength));
+                hexViewer.Highlight((int)selectedNode.Asn1Node.StartByte, (int)(selectedNode.Asn1Node.TotalByteCount));
             }
 
             if (!hexViewer.Visible)
@@ -124,6 +125,20 @@ namespace ASN1Editor
                 hexViewer.Show(this);
                 this.MaximizedBounds = new Rectangle(0, 0, Screen.PrimaryScreen.WorkingArea.Width - hexViewer.Width, Screen.PrimaryScreen.WorkingArea.Height);
             }
+        }
+
+        private void treeView1_AfterSelect(object sender, TreeViewEventArgs e)
+        {
+            if (hexViewer.Visible)
+            {
+                ASN1Tag node = (e.Node as ASN1TreeNode).Asn1Node;
+                hexViewer.Highlight((int)node.StartByte, (int)node.TotalByteCount);
+            }
+        }
+
+        private void exitToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Close();
         }
     }
 }

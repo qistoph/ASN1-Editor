@@ -17,12 +17,13 @@ namespace ASN1Editor
             InitializeComponent();
         }
 
-        public void View(byte[] data)
+        public void View(byte[] data, int highlightStart, int highlightLength)
         {
-            View(data, 0, 0);
+            View(data);
+            Highlight(highlightStart, highlightLength);
         }
 
-        public void View(byte[] data, int highlightStart, int highlightLength)
+        public void View(byte[] data)
         {
             txtHex.Clear();
 
@@ -33,18 +34,11 @@ namespace ASN1Editor
                 if (i % 16 == 0)
                 {
                     txtHex.SelectionStart = txtHex.Text.Length;
-                    txtHex.SelectionColor = Color.LightGray;
+                    txtHex.SelectionColor = Color.DarkGray;
 
                     txtHex.AppendText(i.ToString("X8"));
                     txtHex.AppendText(" ");
-                }
 
-                if (i >= highlightStart && i < (highlightStart + highlightLength))
-                {
-                    txtHex.SelectionColor = Color.Red;
-                }
-                else
-                {
                     txtHex.SelectionColor = Color.Black;
                 }
 
@@ -62,7 +56,6 @@ namespace ASN1Editor
 
                 if (i % 16 == 15)
                 {
-                    txtHex.SelectionColor = Color.Black;
                     txtHex.AppendText("  ");
                     txtHex.AppendText(asciiString.ToString());
                     txtHex.AppendText(Environment.NewLine);
@@ -88,6 +81,56 @@ namespace ASN1Editor
             }
 
             txtHex.SelectionStart = 0;
+        }
+
+        private int HighlightStart = 0;
+        private int HighlightLength = 0;
+        private int bytesOffset = 8 + 2;
+        private int interByteSize = 1;
+        private int lineLength = /*bytesOffset*/ (8+2) + 16 * (2 + /*interByteSize*/ 1) + 2 + 16;
+
+        public void Highlight(int highlightStart, int highlightLength)
+        {
+            SetBytesColor(HighlightStart, HighlightLength, Color.Black);
+
+            HighlightStart = highlightStart;
+            HighlightLength = highlightLength;
+
+            SetBytesColor(HighlightStart, HighlightLength, Color.Red);
+
+            txtHex.SelectionStart = (highlightStart / 16) * lineLength + bytesOffset + (highlightStart % 16) * (2 + interByteSize);
+            txtHex.SelectionLength = 0;
+            //TODO: fix flickering when: txtHex.ScrollToCaret();
+        }
+
+        private void SetBytesColor(int start, int length, Color color)
+        {
+            int end = start + length;
+
+            for (int i = start; i < end; )
+            {
+                int lineNr = i / 16;
+                int lineEnd = end;
+                if (lineEnd > (lineNr + 1) * 16)
+                {
+                    lineEnd = (lineNr + 1) * 16;
+                }
+
+                txtHex.SelectionStart = lineNr * lineLength + bytesOffset + (i % 16) * (2 + interByteSize);
+                txtHex.SelectionLength = (lineEnd - lineNr * 16 - (i % 16)) * (2 + interByteSize);
+                txtHex.SelectionColor = color;
+
+                i = lineEnd;
+            }
+        }
+
+        private void HexViewer_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            if (e.CloseReason == CloseReason.UserClosing)
+            {
+                this.Visible = false;
+                e.Cancel = true;
+            }
         }
     }
 }

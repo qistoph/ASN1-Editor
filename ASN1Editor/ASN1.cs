@@ -261,17 +261,24 @@ namespace ASN1Editor
 
         public static void Encode(string filename, ASN1Tag node)
         {
-            using (FileStream fs = new FileStream(filename, FileMode.Create, FileAccess.Write))
-            {
-                Encode(fs, node);
-            }
+            CallWithFilestream(Encode, filename, node);
         }
 
         public static void EncodeData(string filename, ASN1Tag node)
         {
+            CallWithFilestream(EncodeData, filename, node);
+        }
+
+        public static void ExportText(string filename, ASN1Tag node)
+        {
+            CallWithFilestream(ExportText, filename, node);
+        }
+
+        private static void CallWithFilestream(Action<Stream, ASN1Tag> method, string filename, ASN1Tag node)
+        {
             using (FileStream fs = new FileStream(filename, FileMode.Create, FileAccess.Write))
             {
-                Encode(fs, node);
+                method(fs, node);
             }
         }
 
@@ -360,6 +367,12 @@ namespace ASN1Editor
             #endregion
         }
 
+        public static void ExportText(Stream stream, ASN1Tag node)
+        {
+            byte[] text = ASCIIEncoding.ASCII.GetBytes(node.ToShortText());
+            stream.Write(text, 0, text.Length);
+        }
+
         internal static string GetUTNDescription(int identifier)
         {
             switch (identifier)
@@ -395,5 +408,6 @@ namespace ASN1Editor
                 default: return "UNKNOWN";
             }
         }
+
     }
 }

@@ -34,13 +34,16 @@
             // 
             // txtHex
             // 
+            this.txtHex.DetectUrls = false;
             this.txtHex.Dock = System.Windows.Forms.DockStyle.Fill;
             this.txtHex.Font = new System.Drawing.Font("Courier New", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtHex.Location = new System.Drawing.Point(0, 0);
             this.txtHex.Name = "txtHex";
+            this.txtHex.ReadOnly = true;
             this.txtHex.Size = new System.Drawing.Size(555, 273);
             this.txtHex.TabIndex = 0;
             this.txtHex.Text = "";
+            this.txtHex.WordWrap = false;
             // 
             // HexViewer
             // 
@@ -55,6 +58,7 @@
             this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.Manual;
             this.Text = "HexViewer";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.HexViewer_FormClosing);
             this.ResumeLayout(false);
 
         }

@@ -38,6 +38,7 @@ namespace ASN1Editor
             ContextMenu menu = new ContextMenu();
             MenuItem mnuDumpNode = menu.MenuItems.Add("Save node as...", (s, e) => Dump(SaveType.Node));
             MenuItem mnuDumpData = menu.MenuItems.Add("Save data as...", (s, e) => Dump(SaveType.Data));
+            MenuItem mnuDumpText = menu.MenuItems.Add("Save text as...", (s, e) => Dump(SaveType.Text));
             return menu;
         }
 
@@ -45,6 +46,7 @@ namespace ASN1Editor
         {
             Node,
             Data,
+            Text
         }
 
         private void Dump(SaveType dumpType)
@@ -59,6 +61,9 @@ namespace ASN1Editor
                         break;
                     case SaveType.Data:
                         ASN1.EncodeData(fileDialog.FileName, this.Asn1Node);
+                        break;
+                    case SaveType.Text:
+                        ASN1.ExportText(fileDialog.FileName, this.Asn1Node);
                         break;
                     default:
                         break;

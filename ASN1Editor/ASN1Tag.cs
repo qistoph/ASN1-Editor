@@ -49,6 +49,21 @@ namespace ASN1Editor
             }
         }
 
+        public long TotalByteCount
+        {
+            get
+            {
+                if (Constructed)
+                {
+                    return HeaderLength + SubTags.Sum(sub => sub.TotalByteCount);
+                }
+                else
+                {
+                    return HeaderLength + DataLength;
+                }
+            }
+        }
+
         protected internal ASN1Tag()
         {
             SubTags = new List<ASN1Tag>();
@@ -75,7 +90,7 @@ namespace ASN1Editor
                 StartByte.ToString(),
                 (DataLength == ASN1.IndefiniteLength) ? "inf" : DataLength.ToString(),
                 Constructed ? "cons" : "prim",
-                GetFullId(),
+                Identifier.ToString(),
                 string.Concat(string.Empty.PadLeft(indentLevel * 2, ' '), ShortDescription),
                 DataText
             );

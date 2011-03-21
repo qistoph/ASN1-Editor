@@ -98,6 +98,7 @@
             this.treeView1.SelectedImageIndex = 0;
             this.treeView1.Size = new System.Drawing.Size(292, 227);
             this.treeView1.TabIndex = 0;
+            this.treeView1.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.treeView1_AfterSelect);
             // 
             // menuStrip1
             // 
@@ -132,7 +133,7 @@
             // toolStripSeparator1
             // 
             this.toolStripSeparator1.Name = "toolStripSeparator1";
-            this.toolStripSeparator1.Size = new System.Drawing.Size(97, 6);
+            this.toolStripSeparator1.Size = new System.Drawing.Size(149, 6);
             // 
             // exitToolStripMenuItem
             // 
@@ -140,6 +141,7 @@
             this.exitToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Alt | System.Windows.Forms.Keys.F4)));
             this.exitToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             this.exitToolStripMenuItem.Text = "E&xit";
+            this.exitToolStripMenuItem.Click += new System.EventHandler(this.exitToolStripMenuItem_Click);
             // 
             // hexToolStripMenuItem
             // 
@@ -166,7 +168,7 @@
             // stsFile
             // 
             this.stsFile.Name = "stsFile";
-            this.stsFile.Size = new System.Drawing.Size(213, 17);
+            this.stsFile.Size = new System.Drawing.Size(244, 17);
             this.stsFile.Spring = true;
             this.stsFile.Text = "File:";
             this.stsFile.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
