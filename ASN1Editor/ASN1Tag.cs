@@ -102,6 +102,12 @@ namespace ASN1Editor
 
         public void Write(Stream stream)
         {
+            WriteHeader(stream);
+            WriteData(stream);
+        }
+
+        public void WriteHeader(Stream stream)
+        {
             #region Tag
             byte tagByte = (byte)((((int)Class) << 6) | ((Constructed ? 1 : 0) << 5));
             if (Identifier < 31)
@@ -160,7 +166,10 @@ namespace ASN1Editor
                 throw new IOException("Don't know how to write negative length.");
             }
             #endregion
+        }
 
+        public void WriteData(Stream stream)
+        {
             #region Data
             if (Constructed)
             {

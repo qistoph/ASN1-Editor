@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
+using System.IO;
 
 namespace ASN1Editor
 {
@@ -28,6 +29,58 @@ namespace ASN1Editor
                 this.ImageIndex = 32;
             }
             this.SelectedImageIndex = this.ImageIndex;
+
+            this.ContextMenu = CreateContextMenu();
+        }
+
+        protected ContextMenu CreateContextMenu()
+        {
+            ContextMenu menu = new ContextMenu();
+
+            MenuItem mnuDumpNode = menu.MenuItems.Add("Dump node", DumpNode);
+
+            MenuItem mnuDumpData = menu.MenuItems.Add("Dump data", DumpDataBinary);
+
+            return menu;
+        }
+
+        private enum DumpType
+        {
+            Node,
+            DataBinary,
+        }
+
+        private void DumpNode(object sender, EventArgs e)
+        {
+            Dump(DumpType.Node);
+        }
+
+        private void DumpDataBinary(object sender, EventArgs e)
+        {
+            Dump(DumpType.DataBinary);
+        }
+
+        private void Dump(DumpType dumpType)
+        {
+            SaveFileDialog fileDialog = new SaveFileDialog();
+            if (DialogResult.OK == fileDialog.ShowDialog())
+            {
+                //TODO: mode IO stuff to other class
+                using(FileStream fs = new FileStream(fileDialog.FileName, FileMode.Create, FileAccess.Write)) {
+
+                switch (dumpType)
+                {
+                    case DumpType.Node:
+                        this.Asn1Node.Write(fs);
+                        break;
+                    case DumpType.DataBinary:
+                        this.Asn1Node.WriteData(fs);
+                        break;
+                    default:
+                        break;
+                }
+                }
+            }
         }
 
         private int[] Asn1ImageIndexes = new int[] {
