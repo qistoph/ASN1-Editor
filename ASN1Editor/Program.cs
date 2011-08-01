@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
 using System.IO;
+using System.Reflection;
 
 namespace ASN1Editor
 {
@@ -17,7 +18,9 @@ namespace ASN1Editor
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
-            ASN1TagDataReader.OidDb = OidDb.FromFile("OID.txt");
+            Assembly assem = Assembly.GetExecutingAssembly();
+            string basePath = Path.GetDirectoryName(assem.Location);
+            ASN1TagDataReader.OidDb = OidDb.FromFile(Path.Combine(basePath, "OID.txt"));
 
             Form1 form = new Form1();
             if (args.Length > 0)

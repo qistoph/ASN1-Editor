@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
+using ASN1Editor.ASN1Types;
 
 namespace ASN1Editor
 {
@@ -80,6 +81,14 @@ namespace ASN1Editor
             return Decode(stream, false, true);
         }
 
+        public static ASN1Tag Decode(string filename)
+        {
+            using (FileStream fs = new FileStream(filename, FileMode.Open))
+            {
+                return Decode(fs);
+            }
+        }
+
         /// <summary>
         /// Decode ASN1 tags from a stream.
         /// </summary>
@@ -93,11 +102,16 @@ namespace ASN1Editor
 
             ASN1.Class nodeClass;
             bool constructed;
+            int fullIdentifier;
+            //int identifier;
+
+            //identifier = ReadIdentifier(stream, out nodeClass, out constructed, out fullIdentifier);
 
             node.StartByte = stream.Position;
-            node.Identifier = ReadIdentifier(stream, out nodeClass, out constructed);
+            node.Identifier = ReadIdentifier(stream, out nodeClass, out constructed, out fullIdentifier);
             node.Class = nodeClass;
             node.Constructed = constructed;
+            node.FullIdentifier = fullIdentifier;
             node.DataLength = ReadLength(stream);
             node.HeaderLength = stream.Position - node.StartByte;
 
@@ -120,9 +134,22 @@ namespace ASN1Editor
             {
                 ReadData(node, stream);
 
-                if (readSubAsn1 && node.Identifier == (int)ASN1.TagNumber.BitString)
-                {
-                    ReadSubAsn1(node);
+                //switch (node.Identifier)
+                //{
+                //    case (int)ASN1.TagNumber.Integer:
+                //        node = new ASN1Integer(node);
+                //        break;
+                //}
+
+                if (readSubAsn1) {
+                    switch(node.Identifier) {
+                        case (int)ASN1.TagNumber.BitString:
+                            ReadSubAsn1(node, 1);
+                            break;
+                        case (int)ASN1.TagNumber.OctetString:
+                            ReadSubAsn1(node, 0);
+                            break;
+                    }
                 }
             }
 
@@ -134,11 +161,11 @@ namespace ASN1Editor
         /// </summary>
         /// <param name="node">Node to read data from.</param>
         /// <returns>True if valid ASN1 was read, false if not.</returns>
-        private static bool ReadSubAsn1(ASN1Tag node)
+        private static bool ReadSubAsn1(ASN1Tag node, int dataOffset)
         {
             try
             {
-                using (MemoryStream ms = new MemoryStream(node.Data, 1, node.Data.Length - 1))
+                using (MemoryStream ms = new MemoryStream(node.Data, dataOffset, node.Data.Length - 1))
                 {
                     ASN1Tag subTag = ASN1.Decode(ms);
                     subTag.ToShortText(); // To validate, if it fails with exception, it's not added
@@ -147,8 +174,9 @@ namespace ASN1Editor
                     return true;
                 }
             }
-            catch (Exception) // TODO: narrow this down
+            catch (Exception ex) // TODO: narrow this down
             {
+                Console.WriteLine("Exception: " + ex.Message);
                 return false;
             }
         }
@@ -160,7 +188,7 @@ namespace ASN1Editor
         /// <param name="tagClass">Tag class of the tag</param>
         /// <param name="constructed">Indicates if the tag is constructed = true (or primitive = false)</param>
         /// <returns></returns>
-        private static int ReadIdentifier(Stream stream, out ASN1.Class tagClass, out bool constructed)
+        private static int ReadIdentifier(Stream stream, out ASN1.Class tagClass, out bool constructed, out int fullIdentifier)
         {
             int identifier;
             int b = stream.ReadByte();
@@ -170,16 +198,20 @@ namespace ASN1Editor
             // Class |P/C|   Tag number
             tagClass = (ASN1.Class)(b >> 6);
             constructed = (b & 0x20) != 0;
+            fullIdentifier = 0;
 
             if ((b & 0x1f) != 0x1f)
             {
                 // Single byte identifier
                 identifier = b & 0x1f;
+                fullIdentifier = b;
             }
             else
             {
                 // Multi byte identifier
                 identifier = 0;
+                fullIdentifier |= b;
+
                 do
                 {
                     b = stream.ReadByte();
@@ -187,6 +219,9 @@ namespace ASN1Editor
 
                     identifier <<= 7; // also happens first time, but that's ok, it's still 0
                     identifier |= b & 0x7F;
+
+                    fullIdentifier <<= 8;
+                    fullIdentifier |= b;
 
                     if (identifier == 0) throw new IOException("Invalid ASN.1 identifier (0 while reading constructed identifier).");
                 } while ((b & 0x80) != 0);

@@ -12,10 +12,11 @@ namespace ASN1Editor
         public ASN1.Class Class { get; protected internal set; }
         public bool Constructed { get; protected internal set; }
         public int Identifier { get; protected internal set; }
+        public int FullIdentifier { get; protected internal set; }
         public long StartByte { get; protected internal set; }
         public long DataLength { get; protected internal set; }
         public long HeaderLength { get; protected internal set; }
-        protected internal byte[] Data { get; set; }
+        public byte[] Data { get; set; }
 
         private List<ASN1Tag> SubTags { get; set; }
         private ASN1Tag ParentTag { get; set; }
@@ -25,6 +26,33 @@ namespace ASN1Editor
             get
             {
                 return Constructed ? ASN1.TagNumber.NonePrimitive : (ASN1.TagNumber)Identifier;
+            }
+        }
+
+        public ASN1Tag this[int id]
+        {
+            get
+            {
+                return this[id, 0];
+            }
+        }
+
+        public ASN1Tag this[int id, int index]
+        {
+            get
+            {
+                foreach (ASN1Tag subTag in this)
+                {
+                    if (subTag.FullIdentifier == id)
+                    {
+                        if (index == 0)
+                        {
+                            return subTag;
+                        }
+                        index--;
+                    }
+                }
+                throw new ArgumentException("Sub Tag not found.");
             }
         }
 
@@ -63,6 +91,8 @@ namespace ASN1Editor
                 }
             }
         }
+
+        public int SubTagsCount { get { return SubTags.Count; } }
 
         protected internal ASN1Tag()
         {

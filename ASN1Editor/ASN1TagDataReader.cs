@@ -21,7 +21,9 @@ namespace ASN1Editor
                     case ASN1.TagNumber.BitString:
                         return GetBitDataString(tag);
                     case ASN1.TagNumber.PrintableString:
-                        return GetPrintableDataString(tag);
+                        return GetPrintableDataString(tag, Encoding.ASCII);
+                    case ASN1.TagNumber.Utrf8String:
+                        return GetPrintableDataString(tag, Encoding.UTF8);
                     case ASN1.TagNumber.UtcTime:
                         return GetUtcDataString(tag);
                 }
@@ -91,9 +93,9 @@ namespace ASN1Editor
             return string.Concat("unused: ", unusedBits, " ", GetHexDataString(tag.Data, 1, Math.Min(64, tag.Data.Length - 1)));
         }
 
-        private static string GetPrintableDataString(ASN1Tag tag)
+        private static string GetPrintableDataString(ASN1Tag tag, Encoding encoding)
         {
-            return ASCIIEncoding.ASCII.GetString(tag.Data);
+            return encoding.GetString(tag.Data);
         }
 
         public static DateTime GetUtcTime(ASN1Tag tag)

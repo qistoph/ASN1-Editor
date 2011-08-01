@@ -27,23 +27,28 @@ namespace ASN1Editor
         {
             txtHex.Clear();
 
+            StringBuilder hexString = new StringBuilder();
             StringBuilder asciiString = new StringBuilder();
             int i;
             for (i = 0; i < data.Length; ++i)
             {
                 if (i % 16 == 0)
                 {
-                    txtHex.SelectionStart = txtHex.Text.Length;
-                    txtHex.SelectionColor = Color.DarkGray;
+                //    txtHex.SelectionStart = txtHex.Text.Length;
+                //    txtHex.SelectionColor = Color.DarkGray;
 
-                    txtHex.AppendText(i.ToString("X8"));
-                    txtHex.AppendText(" ");
+                    //    txtHex.AppendText(i.ToString("X8"));
+                    //    txtHex.AppendText(" ");
+                    hexString.Append(i.ToString("X8"));
+                    hexString.Append(" ");
 
-                    txtHex.SelectionColor = Color.Black;
+                //    txtHex.SelectionColor = Color.Black;
                 }
 
-                txtHex.AppendText(" ");
-                txtHex.AppendText(data[i].ToString("X2"));
+                hexString.Append(" ");
+                hexString.Append(data[i].ToString("X2"));
+                //txtHex.AppendText(" ");
+                //txtHex.AppendText(data[i].ToString("X2"));
 
                 if (data[i] >= 32 && data[i] <= 126)
                 {
@@ -56,9 +61,12 @@ namespace ASN1Editor
 
                 if (i % 16 == 15)
                 {
-                    txtHex.AppendText("  ");
-                    txtHex.AppendText(asciiString.ToString());
-                    txtHex.AppendText(Environment.NewLine);
+                    hexString.Append("  ");
+                    hexString.Append(asciiString.ToString());
+                    hexString.Append(Environment.NewLine);
+                    //txtHex.AppendText("  ");
+                    //txtHex.AppendText(asciiString.ToString());
+                    //txtHex.AppendText(Environment.NewLine);
                     asciiString = new StringBuilder();
                 }
             }
@@ -69,18 +77,23 @@ namespace ASN1Editor
             {
                 for (; i % 16 != 15; i++)
                 {
-                    txtHex.AppendText("   ");
+                    hexString.Append("   ");
+                    //txtHex.AppendText("   ");
                 }
 
                 if (i % 16 == 15)
                 {
-                    txtHex.AppendText("  ");
-                    txtHex.AppendText(asciiString.ToString());
-                    txtHex.AppendText(Environment.NewLine);
+                //    txtHex.AppendText("  ");
+                //    txtHex.AppendText(asciiString.ToString());
+                //    txtHex.AppendText(Environment.NewLine);
+                    hexString.Append("  ");
+                    hexString.Append(asciiString.ToString());
+                    hexString.Append(Environment.NewLine);
                 }
             }
 
-            txtHex.SelectionStart = 0;
+            //txtHex.SelectionStart = 0;
+            txtHex.Text = hexString.ToString();
         }
 
         private int HighlightStart = 0;
