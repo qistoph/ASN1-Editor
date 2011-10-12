@@ -12,7 +12,6 @@ namespace ASN1Editor
 {
     public partial class Form1 : Form
     {
-
         private ASN1Tag rootNode;
         private HexViewer hexViewer;
 
@@ -79,7 +78,9 @@ namespace ASN1Editor
                     stsFile.Text = string.Concat("File: ", file);
                     stsSize.Text = string.Concat("Size: ", fs.Length.ToString(), " bytes");
                 }
+
                 ShowAsn1(rootNode);
+                UpdateHexViewerData();
             }
             catch (Exception ex)
             {
@@ -89,7 +90,7 @@ namespace ASN1Editor
             ResumeLayout();
         }
 
-        private void hexToolStripMenuItem_Click(object sender, EventArgs e)
+        private void UpdateHexViewerData()
         {
             byte[] data;
 
@@ -105,12 +106,9 @@ namespace ASN1Editor
             {
                 data = new byte[0];
             }
+            hexViewer.View(data);
 
             ASN1TreeNode selectedNode = treeView1.SelectedNode as ASN1TreeNode;
-            if (!hexViewer.Visible)
-            {
-                hexViewer.View(data);
-            }
 
             if (selectedNode != null)
             {
@@ -119,6 +117,11 @@ namespace ASN1Editor
                 System.Diagnostics.Debug.Assert(selectedNode.Asn1Node.DataLength <= int.MaxValue);
                 hexViewer.Highlight((int)selectedNode.Asn1Node.StartByte, (int)(selectedNode.Asn1Node.TotalByteCount));
             }
+        }
+
+        private void hexToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            UpdateHexViewerData();
 
             if (!hexViewer.Visible)
             {

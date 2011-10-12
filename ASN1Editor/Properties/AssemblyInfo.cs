@@ -8,9 +8,9 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("ASN1Editor")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Capgemini")]
+[assembly: AssemblyCompany("Chris van Marle")]
 [assembly: AssemblyProduct("ASN1Editor")]
-[assembly: AssemblyCopyright("Copyright © Capgemini 2011")]
+[assembly: AssemblyCopyright("Copyright © Chris van Marle 2011")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
