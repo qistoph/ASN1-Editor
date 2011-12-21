@@ -119,7 +119,7 @@ namespace ASN1Editor
             {
                 if (!singleNode)
                 {
-                    while ((stream.Position < node.StartByte + node.DataLength) || (node.DataLength == IndefiniteLength))
+                    while ((stream.Position < node.StartByte + node.HeaderLength + node.DataLength) || (node.DataLength == IndefiniteLength))
                     {
                         ASN1Tag subTag = Decode(stream, singleNode, readSubAsn1);
                         node.AddSubTag(subTag);
