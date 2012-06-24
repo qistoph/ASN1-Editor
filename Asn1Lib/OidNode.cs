@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.IO;
 
-namespace ASN1Editor
+namespace Asn1Lib
 {
     public class OidNode
     {

@@ -3,9 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
-using Asn1Lib;
 
-namespace Asn1Editor
+namespace Asn1Lib
 {
     static internal class Asn1TagDataReader
     {
@@ -45,7 +44,7 @@ namespace Asn1Editor
             }
             return str.ToString();
         }
-        
+
         private static string GetOidDataString(Asn1Tag tag)
         {
             StringBuilder oidBuf = new StringBuilder();

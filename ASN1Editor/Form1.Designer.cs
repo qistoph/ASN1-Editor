@@ -1,4 +1,4 @@
-﻿namespace ASN1Editor
+﻿namespace Asn1Editor
 {
     partial class Form1
     {

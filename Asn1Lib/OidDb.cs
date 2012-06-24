@@ -5,7 +5,7 @@ using System.Text;
 using System.IO;
 using System.Text.RegularExpressions;
 
-namespace ASN1Editor
+namespace Asn1Lib
 {
     public class OidDb : OidNode
     {
@@ -23,7 +23,8 @@ namespace ASN1Editor
                 while ((line = reader.ReadLine()) != null)
                 {
                     Match match = LineRegex.Match(line);
-                    if(match.Success) {
+                    if (match.Success)
+                    {
                         Add(ParseOid(match.Groups[1].Value), 0, match.Groups[3].Value);
                     }
                 }

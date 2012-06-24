@@ -2,34 +2,37 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using CVMDLL.Text;
 using System.IO;
 
-namespace ASN1Editor
+namespace Asn1Lib
 {
-    public class ASN1Tag : IEnumerable<ASN1Tag>
+    public class Asn1Tag : IEnumerable<Asn1Tag>
     {
-        public ASN1.Class Class { get; protected internal set; }
+        public Asn1.Class Class { get; protected internal set; }
         public bool Constructed { get; protected internal set; }
         public int Identifier { get; protected internal set; }
         public int FullIdentifier { get; protected internal set; }
         public long StartByte { get; protected internal set; }
-        public long DataLength { get; protected internal set; }
-        public long HeaderLength { get; protected internal set; }
-        public byte[] Data { get; set; }
+        public bool IndefiniteLength { get; protected internal set; }
+        public byte[] Data { get; protected internal set; }
 
-        private List<ASN1Tag> SubTags { get; set; }
-        private ASN1Tag ParentTag { get; set; }
+        /// <summary>
+        /// When encoding always encode identifiers in multiple bytes, even if it's <31
+        /// </summary>
+        public bool ForceMultiByteIdentifier { get; set; }
 
-        public ASN1.TagNumber TagNumber
+        private List<Asn1Tag> SubTags { get; set; }
+        private Asn1Tag ParentTag { get; set; }
+
+        public Asn1.TagNumber TagNumber
         {
             get
             {
-                return Constructed ? ASN1.TagNumber.NonePrimitive : (ASN1.TagNumber)Identifier;
+                return Constructed ? Asn1.TagNumber.NonePrimitive : (Asn1.TagNumber)Identifier;
             }
         }
 
-        public ASN1Tag this[int id]
+        public Asn1Tag this[int id]
         {
             get
             {
@@ -37,11 +40,11 @@ namespace ASN1Editor
             }
         }
 
-        public ASN1Tag this[int id, int index]
+        public Asn1Tag this[int id, int index]
         {
             get
             {
-                foreach (ASN1Tag subTag in this)
+                foreach (Asn1Tag subTag in this)
                 {
                     if (subTag.FullIdentifier == id)
                     {
@@ -60,10 +63,10 @@ namespace ASN1Editor
         {
             get
             {
-                if (Class == ASN1.Class.Universal && Constructed == false && Identifier == 0 && DataLength == 0)
+                if (Class == Asn1.Class.Universal && Constructed == false && Identifier == 0 && Data.Length == 0)
                     return "EOC";
-                else if (Class == ASN1.Class.Universal && Identifier < 31)
-                    return ASN1.GetUTNDescription(Identifier);
+                else if (Class == Asn1.Class.Universal && Identifier < 31)
+                    return Asn1.GetUTNDescription(Identifier);
                 else
                     return string.Concat("[", Identifier, "]");
             }
@@ -73,34 +76,46 @@ namespace ASN1Editor
         {
             get
             {
-                return Constructed ? "Constructed" : ASN1TagDataReader.GetDataString(this);
-            }
-        }
-
-        public long TotalByteCount
-        {
-            get
-            {
-                if (Constructed)
-                {
-                    return HeaderLength + SubTags.Sum(sub => sub.TotalByteCount);
-                }
-                else
-                {
-                    return HeaderLength + DataLength;
-                }
+                return Constructed ? "Constructed" : Asn1TagDataReader.GetDataString(this);
             }
         }
 
         public int SubTagsCount { get { return SubTags.Count; } }
 
-        protected internal ASN1Tag()
+        protected internal Asn1Tag()
         {
-            SubTags = new List<ASN1Tag>();
+            SubTags = new List<Asn1Tag>();
             ParentTag = null;
         }
 
-        protected internal void AddSubTag(ASN1Tag subTag)
+        protected internal Asn1Tag(Asn1.Class asn1Class, bool constructed, int identifier)
+            : this()
+        {
+            Class = asn1Class;
+            Constructed = constructed;
+            Identifier = identifier;
+
+            //  8  7 | 6 | 5  4  3  2  1
+            // Class |P/C|   Tag number
+            FullIdentifier = (((int)asn1Class) << 6) | (constructed ? 0x20 : 0x00) | (identifier & 0x1F);
+        }
+
+        public Asn1Tag(Asn1.Class asn1Class, int identifier, byte[] data)
+            : this(asn1Class, false, identifier)
+        {
+            Data = (byte[])data.Clone();
+        }
+
+        public Asn1Tag(Asn1.Class asn1Class, int identifier, params Asn1Tag[] subTags)
+            : this(asn1Class, true, identifier)
+        {
+            foreach (Asn1Tag subTag in subTags)
+            {
+                AddSubTag(subTag);
+            }
+        }
+
+        protected internal void AddSubTag(Asn1Tag subTag)
         {
             SubTags.Add(subTag);
             subTag.ParentTag = this;
@@ -118,7 +133,7 @@ namespace ASN1Editor
         {
             output.AddRow(
                 StartByte.ToString(),
-                (DataLength == ASN1.IndefiniteLength) ? "inf" : DataLength.ToString(),
+                (IndefiniteLength) ? "inf" : Asn1.GetTotalByteCount(this).ToString(),
                 Constructed ? "cons" : "prim",
                 Identifier.ToString(),
                 string.Concat(string.Empty.PadLeft(indentLevel * 2, ' '), ShortDescription),
@@ -127,7 +142,7 @@ namespace ASN1Editor
 
             if (Constructed)
             {
-                foreach (ASN1Tag subTag in SubTags)
+                foreach (Asn1Tag subTag in SubTags)
                 {
                     subTag.ToShortText(output, indentLevel + 1);
                 }
@@ -146,9 +161,9 @@ namespace ASN1Editor
             }
         }
 
-        #region IEnumerable<ASN1Tag> Members
+        #region IEnumerable<Asn1Tag> Members
 
-        public IEnumerator<ASN1Tag> GetEnumerator()
+        public IEnumerator<Asn1Tag> GetEnumerator()
         {
             return SubTags.GetEnumerator();
         }
@@ -163,5 +178,6 @@ namespace ASN1Editor
         }
 
         #endregion
+
     }
 }

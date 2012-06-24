@@ -3,14 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
-using ASN1Editor.ASN1Types;
 
-namespace ASN1Editor
+namespace Asn1Lib
 {
-    public static class ASN1
+    public static class Asn1
     {
         /// <summary>
-        /// ASN1 classes
+        /// ASN.1 classes
         /// </summary>
         public enum Class
         {
@@ -21,7 +20,7 @@ namespace ASN1Editor
         }
 
         /// <summary>
-        /// Universal primitive ASN1 tag types
+        /// Universal primitive ASN.1 tag types
         /// </summary>
         public enum TagNumber
         {
@@ -57,11 +56,6 @@ namespace ASN1Editor
         }
 
         /// <summary>
-        /// Value used to indicate indefinite length in a tag's length field
-        /// </summary>
-        public const int IndefiniteLength = -2;
-
-        /// <summary>
         /// End of Contents tag identifier (as specefied in X.690)
         /// </summary>
         public const int EocIdentifier = 0;
@@ -72,16 +66,16 @@ namespace ASN1Editor
         public const int EocLength = 0;
 
         /// <summary>
-        /// Decode ASN1 tags from a stream.
+        /// Decode ASN.1 tags from a stream.
         /// </summary>
         /// <param name="stream">Stream to read from.</param>
         /// <returns>The root node read from the stream.</returns>
-        public static ASN1Tag Decode(Stream stream)
+        public static Asn1Tag Decode(Stream stream)
         {
             return Decode(stream, false, true);
         }
 
-        public static ASN1Tag Decode(string filename)
+        public static Asn1Tag Decode(string filename)
         {
             using (FileStream fs = new FileStream(filename, FileMode.Open))
             {
@@ -90,40 +84,40 @@ namespace ASN1Editor
         }
 
         /// <summary>
-        /// Decode ASN1 tags from a stream.
+        /// Decode ASN.1 tags from a stream.
         /// </summary>
         /// <param name="stream">Stream to read from.</param>
         /// <param name="singleNode">If true, read only one single node without subnodes.</param>
-        /// <param name="readSubAsn1">If true, possible ASN1 data in BitStrings will be decoded.</param>
+        /// <param name="readSubAsn1">If true, possible ASN.1 data in BitStrings will be decoded.</param>
         /// <returns>The root node read from the stream.</returns>
-        public static ASN1Tag Decode(Stream stream, bool singleNode, bool readSubAsn1)
+        public static Asn1Tag Decode(Stream stream, bool singleNode, bool readSubAsn1)
         {
-            ASN1Tag node = new ASN1Tag();
+            Asn1Tag node = new Asn1Tag();
 
-            ASN1.Class nodeClass;
+            Asn1.Class nodeClass;
             bool constructed;
+            bool indefLength;
             int fullIdentifier;
-            //int identifier;
-
-            //identifier = ReadIdentifier(stream, out nodeClass, out constructed, out fullIdentifier);
+            bool forceMultiByteIdentifier;
 
             node.StartByte = stream.Position;
-            node.Identifier = ReadIdentifier(stream, out nodeClass, out constructed, out fullIdentifier);
+            node.Identifier = ReadIdentifier(stream, out nodeClass, out constructed, out fullIdentifier, out forceMultiByteIdentifier);
             node.Class = nodeClass;
             node.Constructed = constructed;
             node.FullIdentifier = fullIdentifier;
-            node.DataLength = ReadLength(stream);
-            node.HeaderLength = stream.Position - node.StartByte;
+            node.ForceMultiByteIdentifier = forceMultiByteIdentifier;
+            long dataLength = ReadLength(stream, out indefLength);
+            long headerLength = stream.Position - node.StartByte;
 
             if (node.Constructed)
             {
                 if (!singleNode)
                 {
-                    while ((stream.Position < node.StartByte + node.HeaderLength + node.DataLength) || (node.DataLength == IndefiniteLength))
+                    while ((stream.Position < node.StartByte + headerLength + dataLength) || indefLength)
                     {
-                        ASN1Tag subTag = Decode(stream, singleNode, readSubAsn1);
+                        Asn1Tag subTag = Decode(stream, singleNode, readSubAsn1);
                         node.AddSubTag(subTag);
-                        if (subTag.Identifier == EocIdentifier && subTag.DataLength == EocLength)
+                        if (subTag.Identifier == EocIdentifier && subTag.Data.Length == EocLength)
                         {
                             break;
                         }
@@ -132,21 +126,16 @@ namespace ASN1Editor
             }
             else
             {
-                ReadData(node, stream);
+                ReadData(node, stream, dataLength);
 
-                //switch (node.Identifier)
-                //{
-                //    case (int)ASN1.TagNumber.Integer:
-                //        node = new ASN1Integer(node);
-                //        break;
-                //}
-
-                if (readSubAsn1) {
-                    switch(node.Identifier) {
-                        case (int)ASN1.TagNumber.BitString:
+                if (readSubAsn1)
+                {
+                    switch (node.Identifier)
+                    {
+                        case (int)Asn1.TagNumber.BitString:
                             ReadSubAsn1(node, 1);
                             break;
-                        case (int)ASN1.TagNumber.OctetString:
+                        case (int)Asn1.TagNumber.OctetString:
                             ReadSubAsn1(node, 0);
                             break;
                     }
@@ -157,17 +146,17 @@ namespace ASN1Editor
         }
 
         /// <summary>
-        /// Parse data in a (BitString) node if it's valid ASN1 and add read nodes as sub nodes to this node.
+        /// Parse data in a (BitString) node if it's valid ASN.1 and add read nodes as sub nodes to this node.
         /// </summary>
         /// <param name="node">Node to read data from.</param>
-        /// <returns>True if valid ASN1 was read, false if not.</returns>
-        private static bool ReadSubAsn1(ASN1Tag node, int dataOffset)
+        /// <returns>True if valid ASN.1 was read, false if not.</returns>
+        private static bool ReadSubAsn1(Asn1Tag node, int dataOffset)
         {
             try
             {
                 using (MemoryStream ms = new MemoryStream(node.Data, dataOffset, node.Data.Length - 1))
                 {
-                    ASN1Tag subTag = ASN1.Decode(ms);
+                    Asn1Tag subTag = Asn1.Decode(ms);
                     subTag.ToShortText(); // To validate, if it fails with exception, it's not added
 
                     node.AddSubTag(subTag);
@@ -182,13 +171,13 @@ namespace ASN1Editor
         }
 
         /// <summary>
-        /// Read an ASN1 tag identifier from a stream (as specified in X.690)
+        /// Read an ASN.1 tag identifier from a stream (as specified in X.690)
         /// </summary>
         /// <param name="stream">Stream to read from</param>
         /// <param name="tagClass">Tag class of the tag</param>
         /// <param name="constructed">Indicates if the tag is constructed = true (or primitive = false)</param>
         /// <returns></returns>
-        private static int ReadIdentifier(Stream stream, out ASN1.Class tagClass, out bool constructed, out int fullIdentifier)
+        private static int ReadIdentifier(Stream stream, out Asn1.Class tagClass, out bool constructed, out int fullIdentifier, out bool forceMultiByteIdentifier)
         {
             int identifier;
             int b = stream.ReadByte();
@@ -196,7 +185,7 @@ namespace ASN1Editor
 
             //  8  7 | 6 | 5  4  3  2  1
             // Class |P/C|   Tag number
-            tagClass = (ASN1.Class)(b >> 6);
+            tagClass = (Asn1.Class)(b >> 6);
             constructed = (b & 0x20) != 0;
             fullIdentifier = 0;
 
@@ -205,12 +194,15 @@ namespace ASN1Editor
                 // Single byte identifier
                 identifier = b & 0x1f;
                 fullIdentifier = b;
+                forceMultiByteIdentifier = false;
             }
             else
             {
                 // Multi byte identifier
                 identifier = 0;
                 fullIdentifier |= b;
+                // juse to be sure we force encoding this to multiple bytes to maintain the structue as much as we can
+                forceMultiByteIdentifier = true;
 
                 do
                 {
@@ -231,11 +223,11 @@ namespace ASN1Editor
         }
 
         /// <summary>
-        /// Read an ASN1 tag's length from a stream (as specified in X.690)
+        /// Read an ASN.1 tag's length from a stream (as specified in X.690)
         /// </summary>
         /// <param name="stream">Stream to read from</param>
         /// <returns>Tag's length</returns>
-        private static long ReadLength(Stream stream)
+        private static long ReadLength(Stream stream, out bool indefiniteLength)
         {
             long length = 0;
             int b = stream.ReadByte();
@@ -244,6 +236,7 @@ namespace ASN1Editor
             {
                 // Short form length
                 length = b & 0x7F;
+                indefiniteLength = false;
             }
             else
             {
@@ -251,7 +244,8 @@ namespace ASN1Editor
                 if ((b ^ 0x80) == 0)
                 {
                     // indefinte length; terminated by EOC
-                    length = IndefiniteLength;
+                    length = 0;
+                    indefiniteLength = true;
                 }
                 else
                 {
@@ -273,20 +267,21 @@ namespace ASN1Editor
                         length <<= 8;
                         length |= l_bytes[i];
                     }
+                    indefiniteLength = false;
                 }
             }
 
             return length;
         }
 
-        private static void ReadData(ASN1Tag node, Stream stream)
+        private static void ReadData(Asn1Tag node, Stream stream, long dataLength)
         {
-            if (node.DataLength > int.MaxValue)
+            if (dataLength > int.MaxValue)
             {
                 throw new IOException("Can't read primitive data with more than " + int.MaxValue + " bytes.");
             }
 
-            node.Data = new byte[(int)node.DataLength];
+            node.Data = new byte[(int)dataLength];
             int read = stream.Read(node.Data, 0, node.Data.Length);
             if (read != node.Data.Length)
             {
@@ -294,22 +289,22 @@ namespace ASN1Editor
             }
         }
 
-        public static void Encode(string filename, ASN1Tag node)
+        public static void Encode(string filename, Asn1Tag node)
         {
             CallWithFilestream(Encode, filename, node);
         }
 
-        public static void EncodeData(string filename, ASN1Tag node)
+        public static void EncodeData(string filename, Asn1Tag node)
         {
             CallWithFilestream(EncodeData, filename, node);
         }
 
-        public static void ExportText(string filename, ASN1Tag node)
+        public static void ExportText(string filename, Asn1Tag node)
         {
             CallWithFilestream(ExportText, filename, node);
         }
 
-        private static void CallWithFilestream(Action<Stream, ASN1Tag> method, string filename, ASN1Tag node)
+        private static void CallWithFilestream(Action<Stream, Asn1Tag> method, string filename, Asn1Tag node)
         {
             using (FileStream fs = new FileStream(filename, FileMode.Create, FileAccess.Write))
             {
@@ -317,25 +312,34 @@ namespace ASN1Editor
             }
         }
 
-        public static void Encode(Stream stream, ASN1Tag node)
+        public static void Encode(Stream stream, Asn1Tag node)
         {
             EncodeHeader(stream, node);
             EncodeData(stream, node);
         }
 
-        public static void EncodeHeader(Stream stream, ASN1Tag node)
+        public static void EncodeHeader(Stream stream, Asn1Tag node)
         {
+            byte[] header = EncodeHeader(node);
+            stream.Write(header, 0, header.Length);
+        }
+
+        public static byte[] EncodeHeader(Asn1Tag node)
+        {
+            //TODO: determine/rationalize the initial size (though it's not like we're working with megabytes)
+            AutoGrowArray<byte> header = new AutoGrowArray<byte>(10);
+
             #region Tag
             byte tagByte = (byte)((((int)node.Class) << 6) | ((node.Constructed ? 1 : 0) << 5));
-            if (node.Identifier < 31)
+            if (node.Identifier < 31 && !node.ForceMultiByteIdentifier)
             {
                 tagByte = (byte)(tagByte | node.Identifier);
-                stream.WriteByte(tagByte);
+                header.Add(tagByte);
             }
             else
             {
                 tagByte |= 31;
-                stream.WriteByte(tagByte);
+                header.Add(tagByte);
                 int n = 0;
                 while ((node.Identifier >> (n * 7)) > 0)
                 {
@@ -347,35 +351,45 @@ namespace ASN1Editor
                     n--;
                     tagByte = (byte)((node.Identifier >> (n * 7)) & (0x7F));
                     if (n >= 1) tagByte |= 0x80;
-                    stream.WriteByte(tagByte);
+                    header.Add(tagByte);
                 }
             }
             #endregion
 
             #region Length
+            long dataLength;
+            if (node.Constructed)
+            {
+                //TODO: don't calculate and generate the length of subnodes over and over again
+                dataLength = node.Sum(subTag => GetTotalByteCount(subTag));
+            }
+            else
+            {
+                dataLength = node.Data.Length;
+            }
+
             byte lenByte;
-            if (node.DataLength >= 0 && node.DataLength <= 127)
+            if (node.IndefiniteLength)
             {
-                lenByte = (byte)node.DataLength;
-                stream.WriteByte(lenByte);
-            }
-            else if (node.DataLength == ASN1.IndefiniteLength)
-            {
-                //throw new NotImplementedException();
                 lenByte = 0x80;
-                stream.WriteByte(lenByte);
+                header.Add(lenByte);
             }
-            else if (node.DataLength > 0)
+            else if (dataLength >= 0 && dataLength <= 127)
             {
-                int numBytes = (int)Math.Ceiling(Math.Log(node.DataLength + 1) / Math.Log(256));
+                lenByte = (byte)dataLength;
+                header.Add(lenByte);
+            }
+            else if (dataLength > 0)
+            {
+                int numBytes = (int)Math.Ceiling(Math.Log(dataLength + 1) / Math.Log(256));
                 if (numBytes >= 0x7F) throw new IOException("Don't know how to write length with 127 bytes");
                 lenByte = (byte)(0x80 | (numBytes & 0x7F));
-                stream.WriteByte(lenByte);
+                header.Add(lenByte);
 
                 for (int i = 0; i < numBytes; ++i)
                 {
-                    lenByte = (byte)((node.DataLength >> (8 * (numBytes - i - 1))) & 0xFF);
-                    stream.WriteByte(lenByte);
+                    lenByte = (byte)((dataLength >> (8 * (numBytes - i - 1))) & 0xFF);
+                    header.Add(lenByte);
                 }
             }
             else
@@ -383,14 +397,28 @@ namespace ASN1Editor
                 throw new IOException("Don't know how to write negative length.");
             }
             #endregion
+
+            return header.ToArray();
         }
 
-        public static void EncodeData(Stream stream, ASN1Tag node)
+        public static long GetTotalByteCount(Asn1Tag node)
+        {
+            if (node.Constructed)
+            {
+                return Asn1.EncodeHeader(node).Length + node.Sum(subTag => GetTotalByteCount(subTag));
+            }
+            else
+            {
+                return Asn1.EncodeHeader(node).Length + node.Data.Length;
+            }
+        }
+
+        public static void EncodeData(Stream stream, Asn1Tag node)
         {
             #region Data
             if (node.Constructed)
             {
-                foreach (ASN1Tag subTag in node)
+                foreach (Asn1Tag subTag in node)
                 {
                     Encode(stream, subTag);
                 }
@@ -402,7 +430,7 @@ namespace ASN1Editor
             #endregion
         }
 
-        public static void ExportText(Stream stream, ASN1Tag node)
+        public static void ExportText(Stream stream, Asn1Tag node)
         {
             byte[] text = ASCIIEncoding.ASCII.GetBytes(node.ToShortText());
             stream.Write(text, 0, text.Length);
@@ -444,5 +472,10 @@ namespace ASN1Editor
             }
         }
 
+        public static short GetShort(byte[] data)
+        {
+            System.Diagnostics.Debug.Assert(data.Length == 2);
+            return (short)((data[0] << 8) | data[1]);
+        }
     }
 }

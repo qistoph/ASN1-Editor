@@ -4,8 +4,9 @@ using System.Linq;
 using System.Windows.Forms;
 using System.IO;
 using System.Reflection;
+using Asn1Lib;
 
-namespace ASN1Editor
+namespace Asn1Editor
 {
     static class Program
     {
@@ -20,7 +21,7 @@ namespace ASN1Editor
 
             Assembly assem = Assembly.GetExecutingAssembly();
             string basePath = Path.GetDirectoryName(assem.Location);
-            ASN1TagDataReader.OidDb = OidDb.FromFile(Path.Combine(basePath, "OID.txt"));
+            Asn1TagDataReader.OidDb = OidDb.FromFile(Path.Combine(basePath, "OID.txt"));
 
             Form1 form = new Form1();
             if (args.Length > 0)

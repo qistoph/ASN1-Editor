@@ -8,7 +8,7 @@ using System.Text;
 using System.Windows.Forms;
 using CVMDLL.Windows.Forms;
 
-namespace ASN1Editor
+namespace Asn1Editor
 {
     public partial class HexViewer : AttachedForm
     {

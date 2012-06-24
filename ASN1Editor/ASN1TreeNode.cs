@@ -4,23 +4,25 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using System.IO;
+using Asn1Lib;
 
-namespace ASN1Editor
+namespace Asn1Editor
 {
-    public class ASN1TreeNode : TreeNode
+    public class Asn1TreeNode : TreeNode
     {
-        public ASN1Tag Asn1Node { get; private set; }
+        public Asn1Tag Asn1Node { get; private set; }
 
-        public ASN1TreeNode(ASN1Tag asn1Node)
+        public Asn1TreeNode(Asn1Tag asn1Node)
         {
             this.Asn1Node = asn1Node;
 
-            this.Text = string.Concat("(", asn1Node.StartByte, ", ", (asn1Node.DataLength == ASN1.IndefiniteLength ? "inf" : asn1Node.DataLength.ToString()), ") ", asn1Node.ShortDescription);
+            // Use data length instead of full byte count
+            this.Text = string.Concat("(", asn1Node.StartByte, ", ", (asn1Node.IndefiniteLength ? "inf" : Asn1.GetTotalByteCount(asn1Node).ToString()), ") ", asn1Node.ShortDescription);
             if (!asn1Node.Constructed)
             {
                 this.Text += string.Concat(": ", asn1Node.DataText);
             }
-            if (asn1Node.Class == ASN1.Class.Universal && asn1Node.Identifier <= 31)
+            if (asn1Node.Class == Asn1.Class.Universal && asn1Node.Identifier <= 31)
             {
                 this.ImageIndex = Asn1ImageIndexes[asn1Node.Identifier];
             }
@@ -57,13 +59,13 @@ namespace ASN1Editor
                 switch (dumpType)
                 {
                     case SaveType.Node:
-                        ASN1.Encode(fileDialog.FileName, this.Asn1Node);
+                        Asn1.Encode(fileDialog.FileName, this.Asn1Node);
                         break;
                     case SaveType.Data:
-                        ASN1.EncodeData(fileDialog.FileName, this.Asn1Node);
+                        Asn1.EncodeData(fileDialog.FileName, this.Asn1Node);
                         break;
                     case SaveType.Text:
-                        ASN1.ExportText(fileDialog.FileName, this.Asn1Node);
+                        Asn1.ExportText(fileDialog.FileName, this.Asn1Node);
                         break;
                     default:
                         break;

@@ -7,12 +7,14 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using System.IO;
+using Asn1Lib;
 
-namespace ASN1Editor
+namespace Asn1Editor
 {
     public partial class Form1 : Form
     {
-        private ASN1Tag rootNode;
+        private const string TitleBase = "ASN.1 Editor";
+        private Asn1Tag rootNode;
         private HexViewer hexViewer;
 
         public Form1()
@@ -23,21 +25,21 @@ namespace ASN1Editor
             hexViewer.Attach(this, AnchorStyles.None);
         }
 
-        public void ShowAsn1(ASN1Tag root)
+        public void ShowAsn1(Asn1Tag root)
         {
             treeView1.Nodes.Clear();
-            ASN1TreeNode treeNode = new ASN1TreeNode(root);
+            Asn1TreeNode treeNode = new Asn1TreeNode(root);
             treeView1.Nodes.Add(treeNode);
 
             AddSubNodes(treeNode, root);
             treeView1.ExpandAll();
         }
 
-        private void AddSubNodes(TreeNode rootTree, ASN1Tag rootAsn1)
+        private void AddSubNodes(TreeNode rootTree, Asn1Tag rootAsn1)
         {
-            foreach (ASN1Tag subAsn1 in rootAsn1)
+            foreach (Asn1Tag subAsn1 in rootAsn1)
             {
-                ASN1TreeNode subTree = new ASN1TreeNode(subAsn1);
+                Asn1TreeNode subTree = new Asn1TreeNode(subAsn1);
                 rootTree.Nodes.Add(subTree);
 
                 AddSubNodes(subTree, subAsn1);
@@ -66,17 +68,18 @@ namespace ASN1Editor
 
                         using (MemoryStream ms = new MemoryStream(pemData))
                         {
-                            rootNode = ASN1.Decode(ms);
+                            rootNode = Asn1.Decode(ms);
                         }
                     }
                     catch (ArgumentException)
                     {
                         fs.Position = 0;
-                        rootNode = ASN1.Decode(fs);
+                        rootNode = Asn1.Decode(fs);
                     }
 
                     stsFile.Text = string.Concat("File: ", file);
                     stsSize.Text = string.Concat("Size: ", fs.Length.ToString(), " bytes");
+                    Text = string.Concat(TitleBase, " - ", file);
                 }
 
                 ShowAsn1(rootNode);
@@ -98,7 +101,7 @@ namespace ASN1Editor
             {
                 using (MemoryStream ms = new MemoryStream())
                 {
-                    ASN1.Encode(ms, rootNode);
+                    Asn1.Encode(ms, rootNode);
                     data = ms.ToArray();
                 }
             }
@@ -108,14 +111,12 @@ namespace ASN1Editor
             }
             hexViewer.View(data);
 
-            ASN1TreeNode selectedNode = treeView1.SelectedNode as ASN1TreeNode;
+            Asn1TreeNode selectedNode = treeView1.SelectedNode as Asn1TreeNode;
 
             if (selectedNode != null)
             {
                 // TODO: length is incorrect for indefinite length nodes
-                System.Diagnostics.Debug.Assert(selectedNode.Asn1Node.StartByte <= int.MaxValue);
-                System.Diagnostics.Debug.Assert(selectedNode.Asn1Node.DataLength <= int.MaxValue);
-                hexViewer.Highlight((int)selectedNode.Asn1Node.StartByte, (int)(selectedNode.Asn1Node.TotalByteCount));
+                hexViewer.Highlight((int)selectedNode.Asn1Node.StartByte, (int)(Asn1.GetTotalByteCount(selectedNode.Asn1Node)));
             }
         }
 
@@ -134,8 +135,8 @@ namespace ASN1Editor
         {
             if (hexViewer.Visible)
             {
-                ASN1Tag node = (e.Node as ASN1TreeNode).Asn1Node;
-                hexViewer.Highlight((int)node.StartByte, (int)node.TotalByteCount);
+                Asn1Tag node = (e.Node as Asn1TreeNode).Asn1Node;
+                hexViewer.Highlight((int)node.StartByte, (int)Asn1.GetTotalByteCount(node));
             }
         }
 
